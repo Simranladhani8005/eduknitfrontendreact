@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "bootstrap/dist/css/bootstrap.min.css"; // Importing Bootstrap for styling
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
+  const [courses, setCourses] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -19,14 +20,14 @@ const Dashboard = () => {
         setUser(parsedUser);
 
         axios
-          .get("http://127.0.0.1:8000/api/dashboard", {
+          .get("http://127.0.0.1:8000/api/user-courses", {
             headers: { Authorization: `Bearer ${token}` },
           })
           .then((response) => {
-            console.log("Dashboard data:", response.data);
+            setCourses(response.data);
           })
           .catch((error) => {
-            setError("Failed to fetch dashboard data.");
+            setError("Failed to fetch enrolled courses.");
             console.error(error);
           });
       } catch (error) {
@@ -83,9 +84,25 @@ const Dashboard = () => {
             <p>Your email: {user.email}</p>
           </div>
         )}
+
+        <h3 className="text-center">Your Enrolled Courses</h3>
+        {courses.length === 0 ? (
+          <p className="text-center">You are not enrolled in any courses.</p>
+        ) : (
+          <ul className="list-group">
+            {courses.map((course) => (
+              <li className="list-group-item" key={course.id}>
+                <h5>{course.title}</h5>
+                <p>{course.description}</p>
+                <p><strong>Duration:</strong> {course.duration}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <button
           onClick={handleLogout}
-          className="btn btn-danger d-block mx-auto"
+          className="btn btn-danger d-block mx-auto mt-4"
         >
           Logout
         </button>

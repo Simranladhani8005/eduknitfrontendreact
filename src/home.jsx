@@ -1,8 +1,67 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const HomePage = () => {
+  const [courses, setCourses] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchCourses();
+    checkAuthentication();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const response = await axios.get("http://127.0.0.1:8000/api/courses");
+      setCourses(response.data);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      alert("Failed to fetch courses!");
+    }
+  };
+
+  const checkAuthentication = () => {
+    const token = localStorage.getItem("token");
+    setIsAuthenticated(!!token);
+  };
+
+  // const handleEnroll = async (courseId) => {
+  //   if (!isAuthenticated) {
+  //     alert("You need to login to enroll in a course.");
+  //     navigate("/login");
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await axios.post(
+  //       "http://127.0.0.1:8000/api/enrollments",
+  //       { course_id: courseId },
+  //       {
+  //         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  //       }
+  //     );
+  //     alert(response.data.message || "Enrolled successfully!");
+  //   } catch (error) {
+  //     console.error("Error enrolling in course:", error);
+  //     alert(error.response?.data?.message || "Failed to enroll!");
+  //   }
+  // };
+
+  const handleEnroll = (courseId) => {
+    if (!isAuthenticated) {
+      alert("You need to login to enroll in a course.");
+      navigate("/login");
+      return;
+    }
+    
+    // Navigate to Course Details Page
+    navigate(`/course-details/${courseId}`);
+  };
+  
+
   return (
     <div>
       {/* Navbar */}
@@ -12,12 +71,27 @@ const HomePage = () => {
             Eduknite
           </Link>
           <div>
-            <Link to="/login" className="btn btn-outline-primary me-2">
-              Login
-            </Link>
-            <Link to="/register" className="btn btn-primary">
-              Signup
-            </Link>
+            {isAuthenticated ? (
+              <button
+                className="btn btn-outline-danger me-2"
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  setIsAuthenticated(false);
+                  navigate("/");
+                }}
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <Link to="/login" className="btn btn-outline-primary me-2">
+                  Login
+                </Link>
+                <Link to="/register" className="btn btn-primary">
+                  Signup
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -26,33 +100,43 @@ const HomePage = () => {
       <header className="bg-primary text-white text-center py-5">
         <div className="container">
           <h1 className="fw-bold">Welcome to Eduknite</h1>
-          <p className="lead">
-            Your one-stop platform for online learning. Start your journey today!
-          </p>
+          <p className="lead">Learn and grow with the best courses available online!</p>
           <Link to="/register" className="btn btn-light btn-lg">
             Get Started
           </Link>
         </div>
       </header>
 
-      {/* Features Section */}
+      {/* Courses Section */}
       <section className="container my-5">
-        <div className="row text-center">
-          <div className="col-md-4">
-            <i className="bi bi-laptop display-4 text-primary"></i>
-            <h3 className="mt-3">Interactive Courses</h3>
-            <p>Learn at your own pace with expert-led courses and interactive exercises.</p>
-          </div>
-          <div className="col-md-4">
-            <i className="bi bi-person-check display-4 text-primary"></i>
-            <h3 className="mt-3">Certified Instructors</h3>
-            <p>Get guidance from top educators and industry professionals.</p>
-          </div>
-          <div className="col-md-4">
-            <i className="bi bi-people display-4 text-primary"></i>
-            <h3 className="mt-3">Community Support</h3>
-            <p>Join a vibrant learning community and get support anytime.</p>
-          </div>
+        <h2 className="text-center mb-4">Explore Our Courses</h2>
+        <div className="row">
+          {courses.length === 0 ? (
+            <p className="text-center">No courses available at the moment.</p>
+          ) : (
+            courses.map((course) => (
+              <div className="col-md-4 mb-4" key={course.id}>
+                <div className="card shadow">
+                  <div className="card-body">
+                    <h5 className="card-title">{course.title}</h5>
+                    <p className="card-text">
+                      {course.description.split(' ').slice(0, 10).join(' ')}{course.description.split(' ').length > 20 ? '...' : ''}
+                    </p>
+                    <p>
+                      <strong>Price:</strong> ${course.price} <br />
+                      <strong>Duration:</strong> {course.duration}
+                    </p>
+                    <button
+                      className="btn btn-success"
+                      onClick={() => handleEnroll(course.id)}
+                    >
+                      Enroll Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </section>
 

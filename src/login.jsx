@@ -31,7 +31,7 @@ const Login = () => {
         if (response.data.user.is_admin) {
           setTimeout(() => navigate("/admin"), 1000);
         } else {
-          setTimeout(() => navigate("/dashboard"), 1000);
+          setTimeout(() => navigate("/home"), 1000);
         }        
       } else {
         setError("Invalid login credentials.");
